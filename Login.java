@@ -1,4 +1,4 @@
-package Desarrollo;
+package info_point_pro;
 
 import java.awt.BorderLayout;
 import java.awt.Frame;

@@ -1,4 +1,4 @@
-package Desarrollo;
+package info_point_pro;
 
 import javax.swing.JFrame;
 
