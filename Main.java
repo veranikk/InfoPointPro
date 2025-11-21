@@ -5,12 +5,16 @@ import javax.swing.SwingUtilities;
 public class Main {
 
 	public static void main(String[] args) {
+		
+		ConexionBBDD.crearBaseDatos();
+		ConexionBBDD.crearTablas();
+		
 		SwingUtilities.invokeLater(new Runnable() {
 
 			@Override
 			public void run() {
-				Login login = new Login(null);
-				login.setVisible(true);
+				SplashScreen pantalla_carga = new SplashScreen();
+				pantalla_carga.setVisible(true);
 			}
 			
 		});

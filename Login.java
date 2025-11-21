@@ -12,6 +12,9 @@ import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import java.awt.event.ActionListener;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.awt.event.ActionEvent;
 
 
@@ -28,7 +31,9 @@ public class Login extends JDialog {
 	 */
 	public Login(Frame parent) {
 		super(parent,"Acceso al sistema", true);
+		setSize(400,200);
 		initComponents();
+		setLocationRelativeTo(null);
 		
 	}
 	private void initComponents() {
@@ -36,12 +41,14 @@ public class Login extends JDialog {
 		contrasenia=new JPasswordField(15);
 		
 		aceptar=new JButton("Iniciar sesión");
+		aceptar.setMnemonic('I'); //Alt + I
 		aceptar.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				validar();
 			}
 		});
 		cancelar=new JButton("Cancelar");
+		cancelar.setMnemonic('C'); // Alt+ C
 		cancelar.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				System.exit(0);
@@ -65,27 +72,41 @@ public class Login extends JDialog {
 		getContentPane().add(botones, BorderLayout.SOUTH);
 		
 		pack();
-		
-		
-		
-		
 	}
 	private void validar() {
 		String user=usuario.getText().trim();
 		String pass=new String(contrasenia.getPassword());
 		
-		if(user.equals("usuario")&& pass.equals("1234")||user.equals("admin")&& pass.equals("12345") ) {
-			JOptionPane.showMessageDialog(this, "Acceso concedido","Bienvenido",JOptionPane.INFORMATION_MESSAGE);
-			dispose();
-			MainApp main=new MainApp();
-			main.setVisible(true);
-		}else {
-			JOptionPane.showMessageDialog(this, "Usuario o contraseña incorrectas","Erro",JOptionPane.ERROR_MESSAGE);
-			usuario.setText("");
-			contrasenia.setText("");
-			//Recupera el foco havia el campo de txt de usuario
-			usuario.requestFocus();
-		}
+		if (user.isEmpty() || pass.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Usuario y contraseña obligatorios", "Error", JOptionPane.ERROR_MESSAGE);
+            usuario.requestFocus();
+            return;
+        }
+		
+		try (Connection conn = ConexionBBDD.getConnection();
+            PreparedStatement ps = conn.prepareStatement("SELECT rol FROM usuarios WHERE usuario = ? AND password = ?")) {
+	            ps.setString(1, user);
+	            ps.setString(2, pass);
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                String rol = rs.getString("rol");
+                JOptionPane.showMessageDialog(this, "Acceso concedido (" + rol + ")", "Bienvenido", JOptionPane.INFORMATION_MESSAGE);
+                dispose();
+
+                MainApp main = new MainApp();
+                main.setVisible(true);
+            } else {
+                // Fallo: limpiar campos y mantener foco (no cerrar ventana)
+                JOptionPane.showMessageDialog(this, "Usuario o contraseña incorrectas", "Error", JOptionPane.ERROR_MESSAGE);
+                usuario.setText("");
+                contrasenia.setText("");
+                usuario.requestFocus();
+            }
+        }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error al validar credenciales: " + ex.getMessage(), "Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
 		
 	}
 
